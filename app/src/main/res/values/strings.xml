@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">HourlyWeatherView</string>
+    <string name="weather_underground_key">96f735b71115578f</string>
 </resources>

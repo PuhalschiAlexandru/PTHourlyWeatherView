@@ -1,4 +1,4 @@
-package com.tapptitude.hourlyweatherview.ui;
+package com.tapptitude.hourlyweatherview.ui.widget;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -14,6 +14,7 @@ import android.util.TypedValue;
 import android.view.View;
 
 import com.tapptitude.hourlyweatherview.R;
+
 
 
 /**
@@ -40,6 +41,7 @@ public class CustomDiagram extends View {
     private int[] mDataSet;
     private int mDataMinValue;
     private int mDataMaxValue;
+    private boolean mIsGridDrawn;
 
     public CustomDiagram(Context context) {
         super(context);
@@ -63,10 +65,12 @@ public class CustomDiagram extends View {
     }
 
     private void init() {
+        initGridPaint();
         initCirclePaint();
         initLineCirclePaint();
         initTextPaint();
-        initGridPaint();
+        mDataSet = new int[0];
+        mIsGridDrawn = false;
     }
 
     private void initCirclePaint() {
@@ -89,7 +93,7 @@ public class CustomDiagram extends View {
     private void initGridPaint() {
         mGridPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mGridPaint.setColor(ContextCompat.getColor(getContext(), R.color.light_gray));
-
+        mGridPaint.setAlpha(40);
     }
 
     private float pxToDp(float px) {
@@ -124,7 +128,7 @@ public class CustomDiagram extends View {
         int width = getWidth() - ((int) pxToDp(WIDTH_MARGIN) * 2);
         int height = getHeight() - ((int) pxToDp(HEIGHT_MARGIN) * 2);
         int step = width / mDataSet.length;
-        
+
         coordinates[WIDTH_COORDINATE] = step * i + WIDTH_MARGIN;
         coordinates[HEIGHT_COORDINATE] = height - (height / mDataMaxValue) * (value - mDataMinValue) + HEIGHT_MARGIN;
 
@@ -134,29 +138,36 @@ public class CustomDiagram extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        for (int i = 0; i < mDataSet.length; i++) {
-            float[] nextCoordinate;
-            float[] coordinates = calculateCirclePosition(i);
-            canvas.drawCircle(coordinates[WIDTH_COORDINATE], coordinates[HEIGHT_COORDINATE],
-                    DEFAULT_RADIUS, mCirclePaint);
-            setTextParameters(i);
-            canvas.drawText(mDataSet[i] + "", coordinates[WIDTH_COORDINATE],
-                    coordinates[HEIGHT_COORDINATE] - mTextHeightOffset, mTextPaint);
+        if (!mIsGridDrawn) {
+            for (int i = 0; i < mDataSet.length; i++) {
+                float[] coordinates = calculateCirclePosition(i);
 
-
-            canvas.drawLine(coordinates[WIDTH_COORDINATE], 0,
-                    coordinates[WIDTH_COORDINATE], getHeight(), mGridPaint);
-            for (int j = 0; j < mDataMaxValue; j++) {
-                float[] gridCoordinates = getRowCoordinates(j);
-                canvas.drawLine(0, gridCoordinates[HEIGHT_COORDINATE],
-                        getWidth(), gridCoordinates[HEIGHT_COORDINATE], mGridPaint);
+                canvas.drawLine(coordinates[WIDTH_COORDINATE], 0,
+                        coordinates[WIDTH_COORDINATE], getHeight(), mGridPaint);
+                for (int j = 0; j < mDataMaxValue; j++) {
+                    float[] gridCoordinates = getRowCoordinates(j);
+                    canvas.drawLine(0, gridCoordinates[HEIGHT_COORDINATE],
+                            getWidth(), gridCoordinates[HEIGHT_COORDINATE], mGridPaint);
+                    mIsGridDrawn = true;
+                }
             }
+            if (mIsGridDrawn) {
+                for (int i = 0; i < mDataSet.length; i++) {
+                    float[] nextCoordinate;
+                    float[] coordinates = calculateCirclePosition(i);
 
-            if (i < mDataSet.length - 1) {
-                nextCoordinate = calculateCirclePosition(i + 1);
-                canvas.drawLine(coordinates[WIDTH_COORDINATE], coordinates[HEIGHT_COORDINATE],
-                        nextCoordinate[WIDTH_COORDINATE], nextCoordinate[HEIGHT_COORDINATE], mLinePaint);
+                    canvas.drawCircle(coordinates[WIDTH_COORDINATE], coordinates[HEIGHT_COORDINATE],
+                            DEFAULT_RADIUS, mCirclePaint);
+                    setTextParameters(i);
+                    canvas.drawText(mDataSet[i] + "", coordinates[WIDTH_COORDINATE],
+                            coordinates[HEIGHT_COORDINATE] - mTextHeightOffset, mTextPaint);
 
+                    if (i < mDataSet.length - 1) {
+                        nextCoordinate = calculateCirclePosition(i + 1);
+                        canvas.drawLine(coordinates[WIDTH_COORDINATE], coordinates[HEIGHT_COORDINATE],
+                                nextCoordinate[WIDTH_COORDINATE], nextCoordinate[HEIGHT_COORDINATE], mLinePaint);
+                    }
+                }
             }
         }
     }
